@@ -3,8 +3,10 @@
 namespace spec\Ivoz\Provider\Domain\Service\Terminal;
 
 use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Provider\Domain\Model\Company\Company;
 use Ivoz\Provider\Domain\Model\Terminal\Terminal;
 use Ivoz\Provider\Domain\Model\Terminal\TerminalDto;
+use Ivoz\Provider\Domain\Model\Terminal\TerminalInterface;
 use Ivoz\Provider\Domain\Model\Terminal\TerminalRepository;
 use Ivoz\Provider\Domain\Model\TerminalModel\TerminalModel;
 use Ivoz\Provider\Domain\Model\TerminalModel\TerminalModelRepository;
@@ -19,6 +21,7 @@ class TerminalFactorySpec extends ObjectBehavior
 
     protected $terminalRepository;
     protected $terminal;
+    protected $company;
     protected $terminalModelRepository;
     protected $terminalModel;
     protected $entityTools;
@@ -83,7 +86,7 @@ class TerminalFactorySpec extends ObjectBehavior
             ->duringFromMassProvisioningCsv(...$this->inputArgs);
     }
 
-    function it_searches_for_existing_terminal()
+    function it_searches_for_existing_terminal_by_name()
     {
         $this->prepareExecution();
 
@@ -91,6 +94,36 @@ class TerminalFactorySpec extends ObjectBehavior
             ->terminalRepository
             ->findOneByCompanyAndName(
                 Argument::any(),
+                Argument::any()
+            )
+            ->shouldBeCalled()
+            ->willReturn($this->terminal);
+
+        $this
+            ->fromMassProvisioningCsv(
+                ...$this->inputArgs
+            )
+            ->shouldReturn($this->terminal);
+    }
+
+
+    function it_searches_for_existing_terminal_by_mac()
+    {
+        $this->prepareExecution();
+
+        $this
+            ->terminalRepository
+            ->findOneByCompanyAndName(
+                Argument::any(),
+                Argument::any()
+            )
+            ->willReturn(
+                null
+            );
+
+        $this
+            ->terminalRepository
+            ->findOneByMac(
                 Argument::any()
             )
             ->shouldBeCalled()
@@ -135,15 +168,38 @@ class TerminalFactorySpec extends ObjectBehavior
             )
             ->willReturn($this->terminalModel);
 
+        $this->company = $this->getInstance(
+            Company::class,
+            [
+                'id' => $this->inputArgs[0]
+            ]
+        );
         $this->terminal = $this->getTestDouble(
             Terminal::class
         );
+
+        $this
+            ->terminal
+            ->getCompany()
+            ->willReturn($this->company);
+
+
+        $this
+            ->entityTools
+            ->entityToDto(
+                Argument::type(TerminalInterface::class)
+            )
+            ->willReturn(
+                new TerminalDto()
+            );
 
         $this
             ->entityTools
             ->dtoToEntity(
                 Argument::type(TerminalDto::class)
             )
-            ->willReturn($this->terminal);
+            ->willReturn(
+                $this->terminal
+            );
     }
 }
