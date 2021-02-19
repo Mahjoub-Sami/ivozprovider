@@ -66,11 +66,10 @@ class TerminalFactory
             }
         }
 
-        if ($terminal) {
-            return $terminal;
-        }
+        $terminalDto = $terminal instanceof TerminalInterface
+            ? $this->entityTools->entityToDto($terminal)
+            : new TerminalDto();
 
-        $terminalDto = new TerminalDto();
         $terminalDto
             ->setName($name)
             ->setPassword($password)
